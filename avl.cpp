@@ -4,7 +4,8 @@
 #include <cstdlib>
 using namespace std;
 
-
+long long leftRotations = 0;
+long long rightRotations = 0;
 
 struct Event {
     long long time;
@@ -32,6 +33,7 @@ Node * x = y -> left ;
 y -> left = x -> right ; 
 x -> right = y;
 upd (y ); upd ( x ); 
+rightRotations++;
 return x; 
 }
 
@@ -41,6 +43,7 @@ Node * y = x -> right ;
 x -> right = y -> left ;
 y -> left = x;
 upd (x ); upd ( y );
+
 return y;
 }
 
@@ -173,6 +176,14 @@ bool validation(Node * x, Event *low, Event *high ) {
 bool validateAvl(Node *x) {
     return validation(x,nullptr,nullptr);
 
+}
+void clearTree(Node* x) {
+    if (x == nullptr)
+        return;
+
+    clearTree(x->left);
+    clearTree(x->right);
+    delete x;
 }
 
 
