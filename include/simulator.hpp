@@ -16,6 +16,7 @@ struct SimConfig {
     int           rto             = 100;     // base timeout (ticks)
     int           maxAckDelay     = 120;     // ACK delay is random in [1, maxAckDelay]
     int           maxSendGap      = 3;       // gap between two new packets is random in [1, maxSendGap]
+    int           maxRetries      = 20;      // give up on a packet after this many retransmissions (stops endless loops, e.g. ack = 0)
 };
 
 struct SimResult {
@@ -33,7 +34,7 @@ public:
     explicit Simulator(const SimConfig& c) : cfg(c), rng(c.seed) {}
     SimResult run(EventSet& set);   // the same code runs for ANY structure
 private:
-    struct PacketState { bool acked = false; std::vector<Event> timers; };
+    struct PacketState { bool acked = false; int retries = 0; std::vector<Event> timers; };
 
     SimConfig cfg;
     Rng rng;

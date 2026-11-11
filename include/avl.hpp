@@ -12,10 +12,10 @@
 
 namespace avlimpl {
 
-long long leftRotations = 0;
-long long rightRotations = 0;
-bool insertedNew = false;   // P3 change
-bool erasedOne = false;     // P3 change
+inline long long leftRotations = 0;
+inline long long rightRotations = 0;
+inline bool insertedNew = false;   // P3 change
+inline bool erasedOne = false;     // P3 change
 
 struct Event {
     long long time;
