@@ -3,6 +3,8 @@
 #include <memory>
 #include "simulator.hpp"
 #include "simple_sets.hpp"
+#include "heap.hpp"
+#include "avl.hpp"
 
 static int failures = 0;
 #define CHECK(cond, msg) do { if (!(cond)) { std::printf("FAIL: %s\n", msg); failures++; } else std::printf("ok:   %s\n", msg); } while (0)
@@ -39,12 +41,23 @@ int main() {
     { StdSetEventSet s; Simulator m(cfg); r3 = m.run(s); }
     CHECK(r1.traceHash == r3.traceHash && r1.processed == r3.processed && r1.cancelled == r3.cancelled,
           "different structures => identical trace");
+    // Test 4b: P1 heap and P2 AVL give the same trace as the sorted vector (this is the real D3 claim).
+    SimResult rh, ra;
+    { HeapEventSet s; Simulator m(cfg); rh = m.run(s); }
+    { AvlEventSet  s; Simulator m(cfg); ra = m.run(s); }
+    CHECK(rh.traceHash == r1.traceHash && rh.processed == r1.processed && rh.cancelled == r1.cancelled, "heap trace == sorted vector trace");
+    CHECK(ra.traceHash == r1.traceHash && ra.processed == r1.processed && ra.cancelled == r1.cancelled, "AVL trace == sorted vector trace");
     // Test 5: a different seed gives a different trace (the fingerprint is really sensitive).
     SimConfig cfg2 = cfg; cfg2.seed = 999;
     SimResult r4; { SortedVectorSet s; Simulator m(cfg2); r4 = m.run(s); }
     CHECK(r4.traceHash != r1.traceHash, "different seed => different trace");
     // Test 6: workload is cancellation-heavy.
     CHECK(r1.cancelled * 2 > r1.scheduled, "more than half of all events were cancelled");
+
+    // Test 7: ack = 0 (no ACK ever comes) must still finish, because of the retry limit.
+    SimConfig cfg0; cfg0.maxEvents = 2000; cfg0.ackPermille = 0;
+    SimResult r5; { SortedVectorSet s; Simulator m(cfg0); r5 = m.run(s); }
+    CHECK(r5.processed > 0 && r5.retransmissions > 0, "ack = 0 terminates (retry limit works)");
 
     std::printf("%s\n", failures ? "SOME TESTS FAILED" : "ALL TESTS PASSED");
     return failures ? 1 : 0;
