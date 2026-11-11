@@ -49,6 +49,8 @@ void Simulator::handle(const Event& e) {
             if (ps.timers[i].seq == e.seq) { ps.timers.erase(ps.timers.begin() + i); break; }
         if (!ps.acked) {              // packet still unacknowledged -> retransmit
             cancelTimers(e.packet);   // the other timers of the old attempt are obsolete
+            if (ps.retries >= cfg.maxRetries) { ps.acked = true; return; }   // give up (packet is finished)
+            ps.retries++;
             res.retransmissions++;
             sendPacket(e.time, e.packet);
         }
