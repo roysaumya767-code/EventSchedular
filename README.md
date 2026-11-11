@@ -10,7 +10,7 @@
 | `include/heap.hpp`, `include/avl.hpp` | P1 and P2 code connected to the interface |
 | `include/simple_sets.hpp` | TEMPORARY stand-ins for testing until the real structures arrive |
 | `src/main.cpp` | The program `./sim --structure ...` |
-| `tests/d3_tests.cpp` | Tests for D3 |
+| `tests/d3_tests.cpp` | Tests for D3 (sorted vector, std::set, heap, AVL, and the retry limit) |
 | `tests/differential_test.cpp` | Random test comparing all structures |
 | `proofs/D3_determinism.md` | The proof, with examples and practice problems |
 
@@ -24,6 +24,9 @@ g++ -std=c++17 -O2 -Iinclude tests/differential_test.cpp src/simulator.cpp -o di
 ./sim --structure heap --events 1000000
 ./sim --structure avl  --events 1000000
 ```
+Options: `--events N --seed S --ack 0..1000 --timers K --rto T --maxdelay D --gap G --retries R`.
+Bad or missing values stop the program with an error message. Use `--timers 40` to reach about 95% cancelled events (default 4 gives about 66%).
+
 Every structure (sortedvec, stdset, heap, avl) must print the same three lines (same `traceHash`).
 
 ## How P1 and P2 are connected (done)
