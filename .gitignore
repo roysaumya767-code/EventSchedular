@@ -1,0 +1,7 @@
+sim
+sim_*
+d3_tests
+diff_test
+*.o
+*.dSYM/
+.DS_Store
