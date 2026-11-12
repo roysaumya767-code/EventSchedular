@@ -18,7 +18,11 @@ void check(bool ok, string msg) {
 }
 
 
-struct OEvent { long long time, seq, id; };
+struct OEvent {
+    long long time;
+    long long seq;
+    long long id;
+};
 
 class Oracle {
     vector<OEvent> arr;
@@ -27,7 +31,7 @@ class Oracle {
     int lowerBound(long long t, long long s) {
         int lo = 0, hi = arr.size();
         while (lo < hi) {
-            int mid = (lo + hi) / 2;
+            int mid = lo + (hi - lo) / 2;
             if (arr[mid].time < t || (arr[mid].time == t && arr[mid].seq < s)) lo = mid + 1;
             else hi = mid;
         }
@@ -35,8 +39,12 @@ class Oracle {
     }
 
 public:
-    int size() { return arr.size(); }
-    OEvent get(int i) { return arr[i]; }
+    int size() { 
+        return arr.size();
+    }
+    OEvent get(int i) { 
+        return arr[i]; 
+    }
 
     void insert(OEvent e) { arr.insert(arr.begin() + lowerBound(e.time, e.seq), e); }
 
@@ -86,8 +94,13 @@ int checkNode(Node *x, Event *low, Event *high) {
     if (rightH == ERR) return ERR;
 
     int realH = 1 + max(leftH, rightH);
-    if (x->h != realH) { errorMsg = "stored height is wrong"; return ERR; }
-    if (abs(leftH - rightH) > 1) { errorMsg = "not balanced"; return ERR; }
+    if (x->h != realH) { 
+        errorMsg = "stored height is wrong"; return ERR;
+    }
+    if (abs(leftH - rightH) > 1) { 
+        errorMsg = "not balanced"; 
+        return ERR; 
+    }
     return realH;
 }
 
