@@ -59,6 +59,8 @@ Also: **an event created later always has a bigger sequence number** than an eve
 
 **Claim.** For a fixed configuration (including the random seed), the sequence of processed events is the same in every run, and the same for every correct event-set structure (heap, AVL, sorted array).
 
+**Assumption.** The event set (heap, AVL, sorted array) is *correct*: `deleteMin` always returns the smallest live event and never returns a cancelled one. This is not proved here; D1 (heap), D4 (AVL checker) and the tests in `tests/differential_test.cpp` cover it.
+
 **Proof (by induction on the step number k).** The *state* of the simulation is: the set of live events, the counter, the state of our random generator, and the per-packet records.
 
 * *Start:* the state before step 1 is fixed by the configuration.
@@ -84,13 +86,15 @@ By induction all steps are identical. ∎
 
 In both cases `e_k < e_{k+1}`. Chaining the inequalities gives `t(e_j) ≤ t(e_k)` for all `j < k`: nothing is ever handled before something with a smaller time. ∎
 
+**Retry limit:** a packet that is never acknowledged is retransmitted at most `maxRetries` times (default 20, `--retries`). This only makes the simulation finish; it does not change the order rule.
+
 **Cancellation does not break this:** a cancelled event simply never appears in the list `e_1, e_2, …`. The proof only talks about live events.
 (P1's lazy-deletion heap must therefore skip cancelled entries when it returns the minimum.)
 
 ## 6. How the code checks the proof while running
 
 * `Simulator::run` tests, for **every** processed event, that `(time, seq)` is strictly bigger than the previous one. If not it prints `ORDER VIOLATION` and stops. This is Theorem 2 checked at runtime.
-* It also builds a 64-bit **fingerprint** (`traceHash`) of the whole processed order. Equal fingerprints ⇒ equal order (Theorem 1 in practice).
+* It also builds a 64-bit **fingerprint** (`traceHash`) of the whole processed order. Equal fingerprints show, with overwhelming probability, that the order was equal (a 64-bit hash could in theory collide, so this is a *check* of Theorem 1, not a proof of it).
 
 Results (1,000,000 events, seed 12345):
 
