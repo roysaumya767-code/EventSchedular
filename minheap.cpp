@@ -129,6 +129,10 @@ private:
     vector<vector<long long int>> buckets =
         vector<vector<long long int>>(100000);
 
+    vector<int>used_buckets;
+    vector<bool>is_used =
+        vector<bool>(100000, false);
+
     long long int item_count = 0;
 
 public:
@@ -149,6 +153,10 @@ public:
 
     void insert(const long long int& a) {
         if (!search(a)) {
+            if(!is_used[a % 100000]){
+            is_used[a % 100000] = true;
+            used_buckets.push_back(a % 100000);
+            }
             buckets[a % 100000].push_back(a);
             ++item_count;
         }
@@ -172,9 +180,11 @@ public:
     }
 
     void clear() {
-        for (auto& bucket : buckets) {
-            bucket.clear();
+        for (long long int i: used_buckets) {
+            buckets[i].clear();
+            is_used[i] = false;
         }
+        used_buckets.clear();
 
         item_count = 0;
     }
