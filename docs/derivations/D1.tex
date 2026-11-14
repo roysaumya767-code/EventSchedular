@@ -1,0 +1,121 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+
+\setlength{\topmargin}{-0.5in}
+\setlength{\textheight}{9.2in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\title{\textbf{Derivation D1: Heap Purge Policy Amortized Bound}\\
+\large Accounting for Hash Set Dynamics and Resolving Fixed-Bucket Cost}
+\author{\textbf{Swarna (250001070)} -- Role P1 (Heap Engineer)\\
+\textit{CS 253 / MA 253 Data Structures \& Algorithms Lab}}
+\date{21 November 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem Statement and System Model}
+Structure A implements an event queue using a binary min-heap keyed by the composite lexicographical tuple $(t(e), s(e))$, representing timestamp and monotonic sequence number. In a discrete-event network simulator modeling packet transmissions with retransmission timeouts, acknowledging a packet often cancels several pending timeouts. To prevent immediate expensive $O(P)$ linear scans or heap searches, cancellations are handled lazily: when $\text{cancel}(e)$ is called, event $e$'s unique sequence number is inserted into a hash set without extracting the node immediately.
+
+The heap physically stores $P$ entries, partitioned into $L$ live events and $C$ cancelled events:
+\begin{equation}
+P = L + C
+\end{equation}
+
+The purge policy triggers when cancelled entries strictly outnumber live entries:
+\begin{equation}
+C > L
+\end{equation}
+Upon triggering, the heap is compacted by discarding all cancelled entries and reconstructing a valid min-heap from the remaining $L$ live entries using Floyd's bottom-up linear-time heap construction algorithm. Our objective is to prove that under this policy, the amortized cost per cancellation is $O(1)$, and the amortized costs of $\text{insert}$ and $\text{deleteMin}$ are $O(\log L)$.
+
+\section{Resolution of the Fixed-Bucket Clearing Cost}
+\noindent\fbox{%
+\parbox{0.96\textwidth}{%
+\textbf{Audit Finding (Legacy Prototype Bottleneck):}\\
+The legacy prototype implemented \texttt{id\_set} using a fixed array of $B = 100{,}000$ buckets. On every purge, \texttt{id\_set::clear()} traversed all $100{,}000$ buckets to reset linked chains, taking $\Theta(B)$ time regardless of the actual live size $L$. In simulation runs where $L \approx 250$, a purge was triggered every $\sim 250$ cancellations, requiring $100{,}000$ bucket operations. The resulting clearing overhead of $\frac{100{,}000}{250} = 400$ operations per cancellation dominated execution time, rendering the heap $5.8\times$ slower than the AVL tree and violating the theoretical amortized bound.
+}%
+}
+\vspace{0.8em}
+
+\noindent\textbf{Resolution in Structure A:}\\
+We replaced the fixed-bucket structure with \texttt{CustomHashSet}, a from-scratch open-addressing hash set utilizing linear probing, dynamic power-of-two table resizing (load factor $\alpha \le 0.60$), and backward-shift deletion (Knuth Algorithm R, leaving zero tombstones). Most importantly, an auxiliary dense array \texttt{occupied\_indices\_} tracks the exact table indices currently in use. When \texttt{clear()} is invoked, it iterates strictly over \texttt{occupied\_indices\_[0 $\dots$ C-1]}, resetting occupied slots in $\Theta(C)$ time. Because capacity is maintained proportional to $C$, the clearing cost is strictly $\Theta(C)$, completely eliminating fixed-size overhead.
+
+\section{Potential Method and Amortized Analysis}
+We analyze the sequence of operations using the Physicist's Potential Method. Define the potential function $\Phi$ at any state of the data structure as:
+\begin{equation}
+\Phi = 2 \cdot C
+\end{equation}
+where $C$ is the number of cancelled events physically stored in the min-heap.
+
+\paragraph{Properties of $\Phi$:}
+\begin{enumerate}
+    \item At initial construction and immediately after any complete purge, $C = 0 \implies \Phi = 0$.
+    \item Since $C \ge 0$ at all times, $\Phi \ge 0$ throughout all states. Thus, the total amortized cost is an upper bound on the total actual cost.
+\end{enumerate}
+
+\subsection{Case 1: Insert Operation ($\text{insert}(e)$)}
+An insertion appends event $e$ to the end of the heap array (size $P$) and sifts up, requiring at most $\lceil \log_2(P + 1) \rceil$ key comparisons. The event is also tracked in the live set in $O(1)$ amortized time. Because the count of cancelled items $C$ is unchanged:
+\begin{equation}
+\Delta\Phi = 2C - 2C = 0
+\end{equation}
+The amortized cost is:
+\begin{equation}
+\widehat{c}_{\text{insert}} = c_{\text{actual}} + \Delta\Phi = O(\log P) + 0 = O(\log P) = O(\log L)
+\end{equation}
+(since $P < 2L$ prior to any purge trigger).
+
+\subsection{Case 2: Cancel Operation Without Purge ($\text{cancel}(e)$)}
+When $\text{cancel}(e)$ is invoked and $C + 1 \le L$, no purge occurs. The sequence number $s(e)$ is inserted into \texttt{CustomHashSet} in $O(1)$ expected time. The number of cancelled items increases from $C$ to $C + 1$.
+\begin{equation}
+\Delta\Phi = 2(C + 1) - 2C = +2
+\end{equation}
+The amortized cost is:
+\begin{equation}
+\widehat{c}_{\text{cancel}} = c_{\text{actual}} + \Delta\Phi = O(1) + 2 = O(1)
+\end{equation}
+
+\subsection{Case 3: Cancel Operation With Purge ($\text{cancel}(e)$)}
+When $\text{cancel}(e)$ causes $C > L$, a purge is triggered immediately. Let $C_p$ denote the number of cancelled entries at the purge point. Because $C_p > L$ and $P = L + C_p$, we have:
+\begin{equation}
+C_p > \frac{P}{2} \implies P < 2C_p \quad \text{and} \quad L < C_p
+\end{equation}
+The purge procedure executes:
+\begin{enumerate}
+    \item \textbf{Filtering live elements:} Linear scan over heap array of size $P$, taking $\alpha_1 P$ time.
+    \item \textbf{Floyd's bottom-up \texttt{buildHeap}:} Sifting down on $L$ elements takes $\alpha_2 L$ time.
+    \item \textbf{Clearing \texttt{CustomHashSet}:} Iterating across $C_p$ occupied slots in \texttt{occupied\_indices\_} takes $\alpha_3 C_p$ time.
+\end{enumerate}
+Total actual purge cost:
+\begin{equation}
+T_{\text{purge}} = \alpha_1 P + \alpha_2 L + \alpha_3 C_p \le (2\alpha_1 + \alpha_2 + \alpha_3) C_p = K \cdot C_p
+\end{equation}
+for some positive hardware constant $K$.
+
+Following the purge, all cancelled events have been eliminated, so $C_{\text{after}} = 0$. The potential change is:
+\begin{equation}
+\Delta\Phi = 2 \cdot 0 - 2 \cdot C_p = -2C_p
+\end{equation}
+Choosing the potential scaling factor such that each cancel deposit covers $\frac{K}{2}$ work, we obtain:
+\begin{equation}
+\widehat{c}_{\text{purge}} = T_{\text{purge}} + \Delta\Phi \le K \cdot C_p - K \cdot C_p = 0
+\end{equation}
+Thus, the actual execution cost of purging is fully pre-paid by the potential stored during previous lazy cancellations.
+
+\subsection{Case 4: DeleteMin Operation ($\text{deleteMin}(out)$)}
+$\text{deleteMin}$ inspects the root. If the root is live, it is extracted, the last element is moved to the root, and sifted down in $O(\log P)$ time ($\Delta\Phi = 0$). If the root was lazily cancelled, it is popped, decrementing $C$ by 1 ($\Delta\Phi = -2$). The released potential pays for the redundant sift-down. Amortized cost: $O(\log P) = O(\log L)$.
+
+\section{Conclusion}
+By eliminating the fixed $\Theta(100{,}000)$ clear bottleneck through dense index tracking in \texttt{CustomHashSet}, the heap purge policy guarantees:
+\begin{enumerate}
+    \item Heap physical size satisfies $P \le 2L$ at all steady states.
+    \item Amortized cost per cancellation is strictly $O(1)$.
+    \item Amortized costs for $\text{insert}$ and $\text{deleteMin}$ are strictly $O(\log L)$.
+\end{enumerate}
+\end{document}

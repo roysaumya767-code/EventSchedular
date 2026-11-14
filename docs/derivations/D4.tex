@@ -1,0 +1,85 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+
+\setlength{\topmargin}{-0.5in}
+\setlength{\textheight}{9.2in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\title{\textbf{Derivation D4: Soundness and Completeness of the AVL Invariant Checker}\\
+\large Formal Verification of BST Order, Height Invariants, and Balance Factors}
+\author{\textbf{Simran (250001066)} -- Role P4 (Oracle \& Verification Lead)\\
+\textit{CS 253 / MA 253 Data Structures \& Algorithms Lab}}
+\date{21 November 2026}
+
+
+\newenvironment{proof}{\noindent\textbf{Proof:}\enspace}{\hfill$\blacksquare$\par\medskip}
+\begin{document}
+
+\maketitle
+
+\section{Structural Invariants of an AVL Tree}
+An AVL tree over the ordered event domain $\mathcal{E}$ must satisfy three structural invariants simultaneously:
+\begin{enumerate}
+    \item \textbf{BST Ordering Invariant:} For every node $x$, all nodes $y \in \text{LeftSubtree}(x)$ satisfy $y < x$, and all nodes $z \in \text{RightSubtree}(x)$ satisfy $x < z$ under the lexicographical order $(t(e), s(e))$.
+    \item \textbf{Stored Height Correctness:} For every node $x$, the cached attribute $x.h$ equals $1 + \max(h(x.\text{left}), h(x.\text{right}))$, with $h(\text{nullptr}) = -1$.
+    \item \textbf{Balance Factor Invariant:} For every node $x$, $\text{bf}(x) = h(x.\text{left}) - h(x.\text{right}) \in \{-1, 0, +1\}$.
+\end{enumerate}
+
+\section{The Validation Algorithm}
+The recursive function \texttt{validateInternal(Node* x, const Event* low, const Event* high)} verifies a subtree rooted at $x$ within the open interval $(\text{low}, \text{high})$:
+
+\begin{verbatim}
+bool validateInternal(Node* x, const Event* low, const Event* high) {
+    if (!x) return true;
+    if (low && !( *low < x->event )) return false;
+    if (high && !( x->event < *high )) return false;
+    int b = ht(x->left) - ht(x->right);
+    if (b < -1 || b > 1) return false;
+    int expected_h = 1 + std::max(ht(x->left), ht(x->right));
+    if (x->h != expected_h) return false;
+    return validateInternal(x->left, low, &x->event) &&
+           validateInternal(x->right, &x->event, high);
+}
+\end{verbatim}
+
+\section{Soundness Proof}
+\begin{theorem}[Soundness]
+If \texttt{validateInternal(root, nullptr, nullptr)} returns \texttt{true}, then the tree rooted at \texttt{root} satisfies BST order, accurate stored heights, and the AVL balance condition at every node.
+\end{theorem}
+\begin{proof}
+By structural induction on the tree:
+\begin{itemize}
+    \item \textbf{Base case:} When $x = \text{nullptr}$, the empty tree vacuously satisfies all three invariants, and the function returns \texttt{true}.
+    \item \textbf{Inductive step:} Assume the theorem holds for both subtrees $x.\text{left}$ and $x.\text{right}$.
+    \begin{enumerate}
+        \item \textit{BST ordering:} The parameter bounds enforce $\text{low} < x.\text{event} < \text{high}$. By inductive hypothesis, all nodes in $x.\text{left}$ fall in $(\text{low}, x.\text{event})$, so all left descendants are strictly less than $x$. Similarly, all right descendants fall in $(x.\text{event}, \text{high})$ and are strictly greater.
+        \item \textit{Stored height:} The check $x.h == 1 + \max(ht(x.\text{left}), ht(x.\text{right}))$ guarantees $x.h$ matches the actual subtree heights.
+        \item \textit{Balance factor:} The check $-1 \le \text{bf}(x) \le 1$ explicitly verifies the AVL invariant at node $x$.
+    \end{enumerate}
+    Since all conditions hold at $x$ and in both subtrees, the entire tree satisfies all AVL invariants.
+\end{itemize}
+\end{proof}
+
+\section{Completeness Proof}
+\begin{theorem}[Completeness]
+If any node in the tree violates BST ordering, stored height, or the balance factor constraint, \texttt{validateInternal(root, nullptr, nullptr)} returns \texttt{false}.
+\end{theorem}
+\begin{proof}
+Suppose an invariant violation exists at node $u$:
+\begin{itemize}
+    \item \textbf{Case 1 (BST violation):} If $u$'s key violates the binary search tree property relative to an ancestor, $u$ will fall outside the valid $(\text{low}, \text{high})$ bound passed down from that ancestor, triggering an immediate \texttt{false}.
+    \item \textbf{Case 2 (Height mismatch):} If $u.h \ne 1 + \max(ht(u.\text{left}), ht(u.\text{right}))$, the explicit equality check fails and returns \texttt{false}.
+    \item \textbf{Case 3 (Balance factor violation):} If $|ht(u.\text{left}) - ht(u.\text{right})| > 1$, the balance check fails and returns \texttt{false}.
+\end{itemize}
+Because all returns are combined via logical \texttt{\&\&}, any \texttt{false} at node $u$ propagates up to the root.
+\end{proof}
+
+\section{Complexity}
+The checker visits each of the $n$ nodes exactly once, performing $O(1)$ operations per node. Runtime is $\Theta(n)$. The recursion stack depth equals tree height $h = O(\log n)$. Memory overhead is strictly $O(\log n)$ stack space with zero dynamic memory allocation.
+\end{document}

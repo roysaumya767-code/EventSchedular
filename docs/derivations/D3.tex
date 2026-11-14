@@ -1,0 +1,80 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+
+\setlength{\topmargin}{-0.5in}
+\setlength{\textheight}{9.2in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\title{\textbf{Derivation D3: Deterministic Simulation and Timestamp-Order Processing}\\
+\large Strict Total Ordering, Causal Monotonicity, and Invariant Preservation}
+\author{\textbf{Pranav (250001034)} -- Role P3 (Simulation Architect)\\
+\textit{CS 253 / MA 253 Data Structures \& Algorithms Lab}}
+\date{21 November 2026}
+
+
+\newenvironment{proof}{\noindent\textbf{Proof:}\enspace}{\hfill$\blacksquare$\par\medskip}
+\begin{document}
+
+\maketitle
+
+\section{Motivation: Eliminating Timestamp Ties}
+In discrete-event simulations, events frequently share identical timestamps. For example, at simulation tick $t = 50$, an acknowledgment packet arrival $A$ and a retransmission timeout expiration $B$ may coincide. If $A$ executes first, timeout $B$ is cancelled, preventing duplicate packet dispatch. If $B$ executes first, an unneeded retransmission packet is scheduled, leading to state divergence.
+
+To ensure bit-for-bit reproducibility and allow rigorous comparative evaluation across disparate priority queue implementations (Structure A, Structure B, and Sorted-Array Oracle), tie-breaking must follow a deterministic, mathematically rigorous total order.
+
+\section{Formal Tie-Breaking Rule}
+Every scheduled event $e$ is assigned a 64-bit integer sequence number $s(e)$ from a monotonic global counter \texttt{nextSeq++}, initialized to $0$ and incremented exclusively within \texttt{Simulator::schedule()}.
+
+\noindent\fbox{%
+\parbox{0.96\textwidth}{%
+\textbf{Definition (Lexicographical Total Order):}\\
+Event $e$ precedes event $f$ (written $e < f$) if and only if:
+\begin{equation}
+e < f \iff (t(e) < t(f)) \lor \big(t(e) = t(f) \land s(e) < s(f)\big)
+\end{equation}
+}%
+}
+\vspace{0.8em}
+
+\begin{lemma}[Uniqueness of Sequence Numbers]
+If $e$ and $f$ are distinct events ($e \ne f$), then $s(e) \ne s(f)$.
+\end{lemma}
+\begin{proof}
+Because \texttt{nextSeq} strictly increases by $1$ per event scheduling call and does not wrap around within $2^{64}$ operations, each event receives a unique sequence number.
+\end{proof}
+
+\begin{lemma}[Strict Total Ordering]
+The relation $<$ defines a strict total order over the universe of all events.
+\end{lemma}
+\begin{proof}
+We verify the four axioms of strict total order:
+\begin{enumerate}
+    \item \textbf{Irreflexivity:} For any event $e$, $t(e) = t(e)$ and $s(e) = s(e)$; neither condition for $e < e$ holds.
+    \item \textbf{Asymmetry:} If $e < f$, then either $t(e) < t(f)$ (implying $t(f) > t(e)$) or $t(e) = t(f)$ and $s(e) < s(f)$ (implying $s(f) > s(e)$). In both cases, $f < e$ cannot hold.
+    \item \textbf{Transitivity:} If $e < f$ and $f < g$, then $t(e) \le t(f) \le t(g)$. If $t(e) < t(g)$, then $e < g$. If $t(e) = t(f) = t(g)$, then $s(e) < s(f) < s(g)$, so $e < g$.
+    \item \textbf{Trichotomy:} For distinct $e \ne f$, if $t(e) \ne t(f)$, timestamps order them. If $t(e) = t(f)$, by Lemma 1 $s(e) \ne s(f)$, so sequence numbers order them. Exactly one of $e < f$ or $f < e$ holds.
+\end{enumerate}
+\end{proof}
+
+\section{Simulation Determinism and Timestamp Monotonicity}
+
+\begin{theorem}[Bit-for-Bit Trace Determinism]
+Under identical initial configurations and random seeds, any correct implementation of \texttt{EventSet} produces an identical sequence of processed events.
+\end{theorem}
+\begin{proof}
+By mathematical induction on the simulation step $k$. At step $k$, the event set contains a unique minimal element under $<$ (by Lemma 2). Since $\text{deleteMin}$ has no degrees of freedom, all structures extract the identical event $e_k$. The deterministic event handler processes $e_k$ using our deterministic PRNG (\texttt{SplitMix64}), scheduling identical child events and issuing identical cancellations. Hence step $k+1$ begins in an identical state across all implementations.
+\end{proof}
+
+\begin{theorem}[Timestamp Monotonicity / Causal Consistency]
+Let $e_1, e_2, e_3, \dots$ denote the sequence of processed events. Then $t(e_k) \le t(e_{k+1})$ for all $k \ge 1$.
+\end{theorem}
+\begin{proof}
+All simulator actions require non-negative delay: $\Delta t \ge 1$ tick. If $e_{k+1}$ was already present when $e_k$ was popped, $t(e_k) \le t(e_{k+1})$ since $e_k$ was minimal. If $e_{k+1}$ was scheduled while processing $e_k$, causality enforces $t(e_{k+1}) = t(e_k) + \Delta t \ge t(e_k)$.
+\end{proof}
+\end{document}
