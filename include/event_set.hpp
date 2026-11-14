@@ -1,7 +1,5 @@
 // event_set.hpp  --  P3 (Simulation Architect)
-// The "plug socket". The simulator only talks to THIS interface.
-// P1 writes HeapEventSet, P2 writes AvlEventSet, P4 writes SortedArrayEventSet.
-// Each of them must inherit from EventSet and fill in the functions below.
+// The shared interface for all event set structures.
 #pragma once
 #include <cstddef>
 #include "event.hpp"
@@ -14,4 +12,11 @@ public:
     virtual bool        cancel(const Event& e) = 0;      // remove this exact event; false if not present
     virtual std::size_t size() const = 0;                // number of LIVE (not cancelled) events
     virtual const char* name() const = 0;
+
+    // successor(t, out): finds the first event with time >= t (smallest (time, seq) where time >= t).
+    // Returns true and writes to out if found; returns false if no such event exists.
+    virtual bool successor(long long t, Event& out) {
+        (void)t; (void)out;
+        return false;
+    }
 };
