@@ -1,0 +1,536 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+
+\newcommand{\Fib}[1]{F(#1)}
+\newcommand{\Nmin}[1]{N(#1)}
+
+\title{\textbf{D2 PROOF}\\[0.5em]\Large Proof of the Height Bound of an AVL Tree}
+\author{Saumya Roy\\ Roll No.\ 250001064}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+%--------------------------------------------------
+\section{Problem Statement}
+
+Taking the height of a single-node tree as $0$, prove that an AVL tree of height $h$ contains at least $F(h+3)-1$ nodes, where $F(k)$ denotes the $k$th Fibonacci number.
+
+Hence, prove that:
+\[
+  \boxed{h < 1.45\,\log_2(n+2)}
+\]
+where $n$ is the total number of nodes in the AVL tree.
+
+%--------------------------------------------------
+\section{Definition of an AVL Tree}
+
+An AVL tree is a self-balancing binary search tree in which the heights of the left and right subtrees of every node differ by at most $1$.
+
+Mathematically,
+\[
+  |h_L - h_R| \le 1.
+\]
+
+The height of a node is defined as:
+\[
+  h = 1 + \max(h_L, h_R).
+\]
+
+We assume:
+\begin{itemize}
+  \item Height of an empty tree $= -1$
+  \item Height of a single-node tree $= 0$
+\end{itemize}
+
+%--------------------------------------------------
+\section{Minimum Number of Nodes in an AVL Tree}
+
+Let $N(h)$ represent the minimum number of nodes required to construct an AVL tree of height $h$.
+
+For an AVL tree of height $h$, at least one subtree must have height $h-1$.
+
+Since the AVL balancing condition allows the heights of two subtrees to differ by at most $1$, the other subtree must have height at least $h-2$.
+
+To minimize the total number of nodes, we choose the subtree heights as $h-1$ and $h-2$.
+
+Therefore,
+\[
+  N(h) = 1 + N(h-1) + N(h-2).
+\]
+
+The additional $1$ represents the root node.
+
+Hence, the recurrence relation is:
+\[
+  \boxed{N(h) = N(h-1) + N(h-2) + 1}
+\]
+
+\subsection*{Initial Conditions}
+
+For an empty tree:
+\[
+  N(-1) = 0.
+\]
+
+For a single-node tree:
+\[
+  N(0) = 1.
+\]
+
+Now,
+\begin{align*}
+  N(1) &= 1 + N(0) + N(-1) = 1 + 1 + 0 = 2.
+\end{align*}
+
+Similarly,
+\begin{align*}
+  N(2) &= 1 + N(1) + N(0) = 1 + 2 + 1 = 4,\\
+  N(3) &= 1 + N(2) + N(1) = 1 + 4 + 2 = 7,\\
+  N(4) &= 1 + N(3) + N(2) = 1 + 7 + 4 = 12.
+\end{align*}
+
+Thus, the values of $N(h)$ are:
+
+\begin{center}
+\begin{tabular}{ccc}
+  \toprule
+  Height $h$ & $N(h)$ & $N(h)+1$ \\
+  \midrule
+  0 & 1  & 2  \\
+  1 & 2  & 3  \\
+  2 & 4  & 5  \\
+  3 & 7  & 8  \\
+  4 & 12 & 13 \\
+  5 & 20 & 21 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+We observe that the sequence $N(h)+1$ is:
+\[
+  2,\ 3,\ 5,\ 8,\ 13,\ 21,\ \dots
+\]
+
+This is the Fibonacci sequence beginning from $F(3)$.
+
+Therefore, we conjecture that:
+\[
+  \boxed{N(h) = F(h+3) - 1}
+\]
+
+%--------------------------------------------------
+\section{Proof Using Mathematical Induction}
+
+We prove that:
+\[
+  N(h) = F(h+3) - 1.
+\]
+
+The Fibonacci sequence is defined as:
+\begin{align*}
+  F(0) &= 0,\\
+  F(1) &= 1,\\
+  F(k) &= F(k-1) + F(k-2).
+\end{align*}
+
+\subsection*{Step 1: Base Cases}
+
+For $h = 0$:
+\begin{align*}
+  N(0) &= 1,\\
+  F(3) - 1 &= 2 - 1 = 1.
+\end{align*}
+Therefore, the formula holds for $h = 0$.
+
+For $h = 1$:
+\begin{align*}
+  N(1) &= 2,\\
+  F(4) - 1 &= 3 - 1 = 2.
+\end{align*}
+Therefore, the formula holds for $h = 1$.
+
+\subsection*{Step 2: Inductive Hypothesis}
+
+Assume that the formula holds for $h-1$ and $h-2$.
+
+Therefore,
+\begin{align*}
+  N(h-1) &= F(h+2) - 1,\\
+  N(h-2) &= F(h+1) - 1.
+\end{align*}
+
+\subsection*{Step 3: Inductive Step}
+
+Using the recurrence relation:
+\[
+  N(h) = 1 + N(h-1) + N(h-2).
+\]
+
+Substituting the inductive hypotheses:
+\[
+  N(h) = 1 + \bigl[F(h+2) - 1\bigr] + \bigl[F(h+1) - 1\bigr].
+\]
+
+Simplifying:
+\[
+  N(h) = F(h+2) + F(h+1) - 1.
+\]
+
+Using the Fibonacci recurrence:
+\[
+  F(h+3) = F(h+2) + F(h+1).
+\]
+
+Therefore,
+\[
+  \boxed{N(h) = F(h+3) - 1.}
+\]
+
+Hence, by mathematical induction, the formula holds for all $h \ge 0$.
+
+Since $N(h)$ is the minimum possible number of nodes in an AVL tree of height $h$, any AVL tree containing $n$ nodes satisfies:
+\[
+  n \ge N(h).
+\]
+
+Therefore,
+\[
+  \boxed{n \ge F(h+3) - 1.}
+\]
+
+Hence, the first part is proved.
+
+\medskip
+\hrule
+\medskip
+
+%--------------------------------------------------
+\section{Introduction to the Golden Ratio}
+
+To establish a logarithmic upper bound on the height, we need to express Fibonacci numbers in terms of an exponential function.
+
+For this purpose, we introduce the golden ratio, denoted by $\varphi$.
+
+The golden ratio is defined as:
+\[
+  \varphi = \frac{1 + \sqrt{5}}{2}.
+\]
+
+Numerically,
+\[
+  \varphi \approx 1.6180339887.
+\]
+
+\subsection*{Derivation of Its Important Property}
+
+Consider the quadratic equation:
+\[
+  x^2 = x + 1.
+\]
+
+Rearranging:
+\[
+  x^2 - x - 1 = 0.
+\]
+
+Using the quadratic formula:
+\begin{align*}
+  x &= \frac{1 \pm \sqrt{1+4}}{2}\\
+    &= \frac{1 \pm \sqrt{5}}{2}.
+\end{align*}
+
+Taking the positive root:
+\[
+  \varphi = \frac{1 + \sqrt{5}}{2}.
+\]
+
+Therefore,
+\[
+  \boxed{\varphi^2 = \varphi + 1.}
+\]
+
+Multiplying both sides by $\varphi^{k-2}$:
+\[
+  \varphi^{k} = \varphi^{k-1} + \varphi^{k-2}.
+\]
+
+This is similar to the Fibonacci recurrence:
+\[
+  F(k) = F(k-1) + F(k-2).
+\]
+
+Thus, powers of the golden ratio satisfy the same type of recurrence as Fibonacci numbers.
+
+This property allows us to establish a lower bound on Fibonacci numbers.
+
+%--------------------------------------------------
+\section{Proof of the Fibonacci Lower Bound}
+
+We prove that:
+\[
+  \boxed{F(k) \ge \varphi^{k-2}}
+\]
+for every integer $k \ge 2$.
+
+We use mathematical induction.
+
+\subsection*{Step 1: Base Cases}
+
+For $k = 2$:
+\begin{align*}
+  F(2) &= 1,\\
+  \varphi^{2-2} &= \varphi^{0} = 1.
+\end{align*}
+Therefore,
+\[
+  F(2) \ge \varphi^{0}.
+\]
+
+For $k = 3$:
+\begin{align*}
+  F(3) &= 2,\\
+  \varphi^{3-2} &= \varphi \approx 1.618.
+\end{align*}
+Since $2 > 1.618$,
+\[
+  F(3) > \varphi.
+\]
+
+Thus, both base cases hold.
+
+\subsection*{Step 2: Inductive Hypothesis}
+
+Assume that the inequality holds for $k-1$ and $k-2$.
+
+Therefore,
+\begin{align*}
+  F(k-1) &\ge \varphi^{k-3},\\
+  F(k-2) &\ge \varphi^{k-4}.
+\end{align*}
+
+\subsection*{Step 3: Inductive Step}
+
+Using the Fibonacci recurrence:
+\[
+  F(k) = F(k-1) + F(k-2).
+\]
+
+Substituting the inductive inequalities:
+\[
+  F(k) \ge \varphi^{k-3} + \varphi^{k-4}.
+\]
+
+Taking $\varphi^{k-4}$ as a common factor:
+\[
+  F(k) \ge \varphi^{k-4}(\varphi + 1).
+\]
+
+Since
+\[
+  \varphi + 1 = \varphi^2,
+\]
+therefore,
+\[
+  F(k) \ge \varphi^{k-4} \times \varphi^{2}.
+\]
+
+Using the exponent rule
+\[
+  \varphi^{a} \times \varphi^{b} = \varphi^{a+b},
+\]
+we obtain:
+\[
+  F(k) \ge \varphi^{k-4+2}.
+\]
+
+Therefore,
+\[
+  \boxed{F(k) \ge \varphi^{k-2}.}
+\]
+
+Hence, by mathematical induction, the inequality holds for every integer $k \ge 2$.
+
+%--------------------------------------------------
+\section{Derivation of the AVL Height Bound}
+
+From Section~4, we proved that:
+\[
+  n \ge F(h+3) - 1.
+\]
+
+Adding $1$ to both sides:
+\begin{equation}\label{eq:1}
+  \boxed{n + 1 \ge F(h+3)}
+\end{equation}
+
+From Section~6, we proved that:
+\[
+  F(k) \ge \varphi^{k-2}.
+\]
+
+Substituting $k = h+3$:
+\[
+  F(h+3) \ge \varphi^{(h+3)-2}.
+\]
+
+Therefore,
+\begin{equation}\label{eq:2}
+  \boxed{F(h+3) \ge \varphi^{h+1}}
+\end{equation}
+
+Combining equations~\eqref{eq:1} and~\eqref{eq:2}:
+\[
+  n + 1 \ge F(h+3) \ge \varphi^{h+1}.
+\]
+
+Hence,
+\begin{equation}\label{eq:3}
+  \boxed{n + 1 \ge \varphi^{h+1}}
+\end{equation}
+
+\subsection*{Step 1: Taking Logarithms}
+
+Taking logarithms to base $2$ on both sides:
+\[
+  \log_2(n+1) \ge \log_2\!\bigl(\varphi^{h+1}\bigr).
+\]
+
+Using the logarithmic identity
+\[
+  \log(a^b) = b\log(a),
+\]
+we obtain:
+\[
+  \log_2(n+1) \ge (h+1)\log_2(\varphi).
+\]
+
+\subsection*{Step 2: Isolating $h$}
+
+Dividing both sides by $\log_2(\varphi)$, which is positive:
+\[
+  \frac{\log_2(n+1)}{\log_2(\varphi)} \ge h+1.
+\]
+
+Therefore,
+\[
+  h+1 \le \frac{\log_2(n+1)}{\log_2(\varphi)}.
+\]
+
+Subtracting $1$:
+\[
+  \boxed{h \le \frac{\log_2(n+1)}{\log_2(\varphi)} - 1}
+\]
+
+\subsection*{Step 3: Evaluating the Constant}
+
+We know:
+\[
+  \varphi = \frac{1+\sqrt{5}}{2} \approx 1.6180339887.
+\]
+
+Therefore,
+\[
+  \log_2(\varphi) \approx 0.6942419.
+\]
+
+Hence,
+\[
+  \frac{1}{\log_2(\varphi)} \approx 1.4404201.
+\]
+
+Substituting:
+\[
+  h \le 1.4404201\ldots \log_2(n+1) - 1.
+\]
+
+Since
+\[
+  1.4404201\ldots < 1.45
+\]
+and $\log_2(n+1) > 0$ for $n \ge 1$,
+\[
+  h < 1.45\,\log_2(n+1) - 1.
+\]
+
+Also, since
+\[
+  n + 1 < n + 2,
+\]
+we have
+\[
+  \log_2(n+1) < \log_2(n+2).
+\]
+
+Therefore,
+\[
+  1.45\,\log_2(n+1) - 1 < 1.45\,\log_2(n+2).
+\]
+
+Combining the inequalities:
+\[
+  \boxed{h < 1.45\,\log_2(n+2)}
+\]
+
+Hence, the second part is proved.
+
+\medskip
+\hrule
+\medskip
+
+%--------------------------------------------------
+\section{Conclusion}
+
+We first derived the recurrence relation for the minimum number of nodes in an AVL tree:
+\[
+  \boxed{N(h) = 1 + N(h-1) + N(h-2)}
+\]
+
+Using mathematical induction and the Fibonacci recurrence, we proved:
+\[
+  \boxed{N(h) = F(h+3) - 1}
+\]
+
+Therefore, an AVL tree of height $h$ contains at least:
+\[
+  \boxed{n \ge F(h+3) - 1}
+\]
+
+Next, using the golden ratio
+\[
+  \varphi = \frac{1+\sqrt{5}}{2}
+\]
+and the inequality
+\[
+  F(k) \ge \varphi^{k-2},
+\]
+we obtained:
+\[
+  n + 1 \ge \varphi^{h+1}.
+\]
+
+Taking logarithms and simplifying, we proved:
+\[
+  \boxed{h < 1.45\,\log_2(n+2)}
+\]
+
+Consequently,
+\[
+  \boxed{h = O(\log n)}
+\]
+
+Thus, the height of an AVL tree grows logarithmically with the number of nodes.
+
+This guarantees that search, insertion, and deletion operations in an AVL tree can be performed in $O(\log n)$ time.
+
+\textbf{Hence, both required results are proved.}
+
+\end{document}
