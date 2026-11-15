@@ -25,8 +25,11 @@ The fixed hash bucket arrays make heap accounted memory much larger at small N. 
 
 Diagnostic summaries subtract warm-up counter values for purge and rotation counts. Memory is accounted storage at sampled points; it excludes allocator overhead and temporary purge peaks. Separate diagnostic graphs show memory, purge count, rotations and height. Long-run occupancy plots show the first seed; summaries cover all five.
 
-## What to say in the report
+## Conclusion And Limitations
 
-“We tested our corrected heap and AVL implementations using identical pre-generated traces. At N=1000 with exponential increments, the heap was faster at both 0% and 95% cancellation in five paired longer runs. The broader grid was exploratory because its timers were short. The result is specific to our implementations and includes their different ID-index and storage designs.”
+For 1,000 live events with exponential time increments, the heap was faster than the AVL tree at both 0% and 95% cancellation across five paired runs. Both implementations received identical event sequences.
 
-For final submission, repeat on the team machine with at least ten paired seeds, longer warm-up checks, sufficient duration at every configuration, recorded compiler/flags and no concurrent workload. Do not infer an exact crossover from these two focused rates.
+These findings apply to the tested implementations and settings. Their different ID lookup and memory storage designs also affect performance. The broader experiments used short measurement periods, so those results are preliminary.
+
+Further testing with more seeds and longer measurement periods is needed to draw broader conclusions. These experiments do not establish an exact cancellation rate at which one structure becomes faster than the other.
+
