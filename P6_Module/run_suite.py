@@ -1,0 +1,20 @@
+"""Run paired trials; generation and validation are outside the C++ timer."""
+import argparse, itertools, json, pathlib, platform, subprocess, sys
+p=argparse.ArgumentParser()
+p.add_argument('--exe',required=True)
+p.add_argument('--mode',choices=['demo','team'],default='team')
+p.add_argument('--out',default='results/run')
+p.add_argument('--sizes',default='100,1000,10000')
+p.add_argument('--steps',type=int,default=100000)
+p.add_argument('--warmup',type=int,default=10000)
+p.add_argument('--repeats',type=int,default=10)
+p.add_argument('--seed',type=int,default=123456789)
+p.add_argument('--rates',default='0,.05,.10,.20,.30,.40,.50,.60,.70,.80,.90,.95')
+p.add_argument('--build-description',required=True,help='Compiler version, flags and commit ID')
+a=p.parse_args()
+out=pathlib.Path(a.out);out.mkdir(parents=True,exist_ok=True)
+if list(out.iterdir()): p.error('output directory must be empty; preserve earlier runs')
+(out/'environment.json').write_text(json.dumps({'arguments':vars(a),'platform':platform.platform(),'processor':platform.processor(),'python':sys.version},indent=2))
+for i,(n,r,d) in enumerate(itertools.product(a.sizes.split(','),a.rates.split(','),['exponential','uniform','bimodal','triangular'])):
+    print(n,r,d,flush=True)
+    subprocess.run([str(pathlib.Path(a.exe).resolve()),a.mode,n,str(a.steps),str(a.warmup),r,d,str(a.seed),str(a.repeats),str(out/f'case_{i:03}')],check=True)

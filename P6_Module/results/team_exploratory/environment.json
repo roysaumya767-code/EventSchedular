@@ -1,0 +1,17 @@
+{
+  "arguments": {
+    "exe": "/tmp/p6_integrated",
+    "mode": "team",
+    "out": "P6_Module/results/team_exploratory",
+    "sizes": "100,1000,10000",
+    "steps": 5000,
+    "warmup": 2000,
+    "repeats": 5,
+    "seed": 123456789,
+    "rates": "0,.05,.10,.20,.30,.40,.50,.60,.70,.80,.90,.95",
+    "build_description": "GCC 14.2.0; -std=c++17 -O2 -Wall -Wextra -Wpedantic; adapted uploaded heap and AVL; exploratory grid, not final timing evidence"
+  },
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "processor": "",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+}

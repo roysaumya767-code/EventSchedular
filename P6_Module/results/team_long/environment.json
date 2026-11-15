@@ -1,0 +1,6 @@
+{
+  "compiler": "GCC 14.2.0",
+  "flags": "-std=c++17 -O2 -Wall -Wextra -Wpedantic",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "scope": "Focused longer runs, N=1000, exponential, r=0 and .95, five paired seeds; 3,000,000 cycles and 10,000 warm-up cycles; shared authoring environment"
+}
